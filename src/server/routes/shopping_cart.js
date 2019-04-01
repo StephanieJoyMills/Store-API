@@ -19,7 +19,9 @@ module.exports = async function(app) {
         res.send({ err: "cart is empty" });
         return;
       }
-
+      if (workerTrigger()) {
+        res.sent({ err: "bad worker" });
+      }
       await checkoutCart(products);
       res.sendStatus(204);
     } catch (err) {
@@ -118,3 +120,18 @@ module.exports = async function(app) {
     }
   });
 };
+
+function workerTrigger() {
+  const cluster = require("cluster");
+  if (cluster.isMaster) {
+    // Master
+    const worker = cluster.fork();
+
+    worker.on("message", function(message) {
+      console.log("worker got message:", message);
+    });
+  } else if (cluster.isWorker) {
+    // Worker
+    process.send("sending worker to master");
+  }
+}
