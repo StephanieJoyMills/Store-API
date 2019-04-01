@@ -10,7 +10,7 @@ exports.createCart = async (name, email) => {
   return result[0];
 };
 
-exports.checkIfHasCart = async email => {
+exports.checkIfHasCart = async (email) => {
   const result = await knex("shopping_carts")
     .select("id")
     .where({ owner_email: email });
@@ -62,7 +62,7 @@ exports.getCart = async (cartId, format = true) => {
     let products =
       rows[0].id === null
         ? null
-        : rows.map(row => {
+        : rows.map((row) => {
             let price = row.price;
             total += price;
             return {
@@ -77,8 +77,8 @@ exports.getCart = async (cartId, format = true) => {
 };
 
 // I was unsure how to handle item that had no inventory so for now I am leaving them in the cart :)
-exports.checkoutCart = async products => {
-  let queries = products.map(product => {
+exports.checkoutCart = async (products) => {
+  let queries = products.map((product) => {
     knex.transaction(function(t) {
       return knex("products")
         .transacting(t)
@@ -103,4 +103,11 @@ exports.checkoutCart = async products => {
     });
   });
   return Promise.all(queries);
+};
+
+exports.productInventory = async (id) => {
+  const rows = await knex("products")
+    .select("inventory_count")
+    .where({ id });
+  return rows[0] || false;
 };
